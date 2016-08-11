@@ -48,8 +48,10 @@ from ftplib import FTP
 import ftplib
 try:
     import requests
+    #from requests.auth import HTTPBasicAuth
 except ImportError:
     import urllib2
+    import base64
 from HTMLParser import HTMLParser
 import re
 
@@ -605,17 +607,23 @@ class downModis:
         filSave = open(filHdf, "wb")
         try:  # download and write the file
             try:  # use request module
-                http = requests.get(urljoin(self.url, self.path, day, filDown))
+                sess = requests.Session()
+                sess.auth = (self.user, self.password)
+                http = sess.get(urljoin(self.url, self.path, day, filDown))
+                
                 orig_size = http.headers['content-length']
                 filSave.write(http.content)
             except:  # use urllib2 module
-                http = urllib2.urlopen(urljoin(self.url, self.path, day,
-                                               filDown))
+                request = urllib2.Request(urljoin(self.url, self.path, day, filDown))
+                base64string = base64.encodestring('%s:%s' % (self.user, self.password)).replace('\n', '')
+                request.add_header("Authorization", "Basic %s" % base64string)   
+                http = urllib2.build_opener(urllib2.HTTPCookieProcessor).open(request)
                 orig_size = http.headers['content-length']
                 filSave.write(http.read())
 
         # if local file has an error, try to download the file again
         except:
+            raise
             logging.error("Cannot download {name}. "
                           "Retrying...".format(name=filDown))
             filSave.close()
