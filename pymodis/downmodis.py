@@ -607,10 +607,7 @@ class downModis:
         filSave = open(filHdf, "wb")
         try:  # download and write the file
             try:  # use request module
-                sess = requests.Session()
-                sess.auth = (self.user, self.password)
-                http = sess.get(urljoin(self.url, self.path, day, filDown))
-                
+                http = requests.get(urljoin(self.url, self.path, day, filDown))
                 orig_size = http.headers['content-length']
                 filSave.write(http.content)
             except:  # use urllib2 module
@@ -623,7 +620,6 @@ class downModis:
 
         # if local file has an error, try to download the file again
         except:
-            raise
             logging.error("Cannot download {name}. "
                           "Retrying...".format(name=filDown))
             filSave.close()
